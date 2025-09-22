@@ -45,6 +45,6 @@ Daily cost = $0.05 × 50,000 × (1 - 0.70)
 - **Shorten context length:** Reduce tokens in (200 → 100 for support; 100 → 50 for search) by summarizing context. Cuts prompt cost ~50%.  
 - **Reduce output length:** Cap replies at ≤80 tokens for support; ≤30 tokens for typeahead suggestions.  
 - **Cache optimization:** Improve cache hit rates (support: 30% → 50%; search: 70% → 85%) by canonicalizing queries.  
-- **Model routing:** For common/low-risk queries, route to cheaper or smaller models (like Llama 3.`); keep GPT-4o-mini for complex cases.  
+- **Model routing:** For common/low-risk queries, route to cheaper or smaller models; keep GPT-4o-mini for complex cases.  
 - **Batching (search):** Precompute popular query completions offline to reduce live token usage.  
-- **Tiered fallback:** Use distilled models for frequent short queries; reserve GPT-4o-mini for rare/long-tail cases.  
+- **Tiered fallback:** Use distilled models such as Llama 3.1 for frequent short queries; reserve GPT-4o-mini for rare/long-tail cases.  
