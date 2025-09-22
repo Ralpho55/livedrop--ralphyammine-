@@ -1,6 +1,6 @@
 # AI Touchpoint Specs
 
-## 1. Conversational Commerce & AI Assistant
+## 1. AI Commerce Assistant
 
 **Problem statement**  
 Customers often contact support for simple queries such as order status, return policies, or shipping details. These repetitive requests increase support workload and delay responses. An AI-powered assistant grounded in ShopLite’s FAQs and order-status API can instantly resolve most of these questions, lowering support contact rates and improving customer satisfaction.
