@@ -13,6 +13,6 @@
 ---
 
 ### Why these two
-We selected **Conversational AI Assistant** and **AI-powered Search Typeahead** because they both directly support ShopLite’s KPIs and are feasible to integrate with the given defaults. The assistant reduces support tickets by handling FAQs and order-status queries, lowering contact rates and improving satisfaction. The AI-powered typeahead enhances product discovery during search, improving conversion rates by surfacing relevant items faster. Both touchpoints align with the traffic, cache, and latency defaults, and have clear fallback options (human agents for support, basic autocomplete for search), making them practical and impactful near-term implementations.
+We selected **AI Commerce Assistant** and **AI-powered Search Typeahead** because they both directly support ShopLite’s KPIs and are feasible to integrate with the given defaults. The assistant reduces support tickets by handling FAQs and order-status queries, lowering contact rates and improving satisfaction. The AI-powered typeahead enhances product discovery during search, improving conversion rates by surfacing relevant items faster. Both touchpoints align with the traffic, cache, and latency defaults, and have clear fallback options (human agents for support, basic autocomplete for search), making them practical and impactful near-term implementations.
 
 
