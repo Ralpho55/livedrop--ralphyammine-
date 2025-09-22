@@ -1,3 +1,5 @@
+# AI Capability Map
+
 | Capability | Intent (user) | Inputs (this sprint) | Risk 1–5 (tag) | p95 ms | Est. cost/action | Fallback | Selected |
 |---|---|---|---|---:|---:|---|:---:|
 | Personalized product recommendations | Discover relevant products quickly | SKU catalog, limited session data | 4 (data sparsity/limited session data) | 300 | $0.08 | Default “bestsellers” widget |   |
