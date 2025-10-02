@@ -33,10 +33,10 @@ refusal_prompt:
   context_guidelines:
     - "Do NOT make up answers."
     - "If no relevant context is found, politely refuse."
-    - "Always set Sources: Only say None."
+    - "Always set Sources: None."
   response_format: |
     Answer: I'm sorry, I don’t have that information in the Shoplite documentation.
-    Sources: Only say None
+    Sources:  None
 
 clarification_prompt:
   role: "You are a Shoplite assistant that ensures user questions are clear."
@@ -44,10 +44,10 @@ clarification_prompt:
   context_guidelines:
     - "If a question is unclear or too vague, do NOT try to answer."
     - "Always respond with a polite clarification request."
-    - "Always set Sources: ONLY say None."
+    - "Always set Sources: None."
   response_format: |
     Answer: Could you clarify your request?
-    Sources: ONLY say None
+    Sources: None
 
 
 
