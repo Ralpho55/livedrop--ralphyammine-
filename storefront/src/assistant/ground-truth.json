@@ -1,0 +1,123 @@
+[
+  {
+    "qid": 1,
+    "category": "shipping",
+    "question": "How long does standard shipping take?",
+    "answer": "Standard shipping typically takes 5-7 business days. You'll receive a tracking number via email once your order ships."
+  },
+  {
+    "qid": 2,
+    "category": "shipping",
+    "question": "Do you offer express or overnight shipping?",
+    "answer": "Yes, we offer express shipping (2-3 business days) and overnight shipping options at checkout for an additional fee."
+  },
+  {
+    "qid": 3,
+    "category": "returns",
+    "question": "What is your return policy?",
+    "answer": "We accept returns within 30 days of delivery. Items must be unused, in original packaging, and with all tags attached. Return shipping is free for defective items."
+  },
+  {
+    "qid": 4,
+    "category": "returns",
+    "question": "How do I start a return?",
+    "answer": "To start a return, log into your account, go to Order History, select the order, and click 'Return Items'. Follow the prompts to print your return label."
+  },
+  {
+    "qid": 5,
+    "category": "returns",
+    "question": "How long does it take to get a refund?",
+    "answer": "Refunds are processed within 5-7 business days after we receive your return. The funds will appear in your original payment method within 3-5 additional business days."
+  },
+  {
+    "qid": 6,
+    "category": "cancellation",
+    "question": "Can I cancel my order?",
+    "answer": "Orders can be cancelled within 1 hour of placement. After that, the order may have already been processed for shipping. Contact customer support immediately if you need to cancel."
+  },
+  {
+    "qid": 7,
+    "category": "cancellation",
+    "question": "Will I be charged a cancellation fee?",
+    "answer": "No, there are no cancellation fees if you cancel within the allowed timeframe. If the order has already shipped, standard return policies apply."
+  },
+  {
+    "qid": 8,
+    "category": "payment",
+    "question": "What payment methods do you accept?",
+    "answer": "We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, Apple Pay, and Google Pay."
+  },
+  {
+    "qid": 9,
+    "category": "payment",
+    "question": "Is my payment information secure?",
+    "answer": "Yes, all transactions are secured with 256-bit SSL encryption. We never store your full credit card information on our servers."
+  },
+  {
+    "qid": 10,
+    "category": "account",
+    "question": "Do I need an account to place an order?",
+    "answer": "No, you can checkout as a guest. However, creating an account allows you to track orders, save addresses, and access your order history easily."
+  },
+  {
+    "qid": 11,
+    "category": "account",
+    "question": "How do I reset my password?",
+    "answer": "Click 'Forgot Password' on the login page, enter your email address, and we'll send you a password reset link within a few minutes."
+  },
+  {
+    "qid": 12,
+    "category": "shipping",
+    "question": "Do you ship internationally?",
+    "answer": "Currently, we only ship within the United States and Canada. International shipping to other countries is not available at this time."
+  },
+  {
+    "qid": 13,
+    "category": "product",
+    "question": "How do I know if an item is in stock?",
+    "answer": "Product availability is shown on each product page. If an item shows 'In Stock', it's available for immediate shipping. Out of stock items will display 'Out of Stock'."
+  },
+  {
+    "qid": 14,
+    "category": "product",
+    "question": "Can I get notifications when out-of-stock items are available?",
+    "answer": "Yes, click the 'Notify Me' button on any out-of-stock product page. We'll email you as soon as the item is back in stock."
+  },
+  {
+    "qid": 15,
+    "category": "warranty",
+    "question": "Do your products come with a warranty?",
+    "answer": "Yes, all electronics come with a 1-year manufacturer's warranty. Other products have a 90-day warranty against defects. Extended warranty options are available at checkout."
+  },
+  {
+    "qid": 16,
+    "category": "tracking",
+    "question": "How do I track my order?",
+    "answer": "Once your order ships, you'll receive a tracking number via email. Click the tracking link or enter the number on the carrier's website to see real-time updates."
+  },
+  {
+    "qid": 17,
+    "category": "tracking",
+    "question": "My tracking hasn't updated in days. What should I do?",
+    "answer": "Tracking can sometimes take 24-48 hours to update after the initial scan. If there's no update after 3 business days, please contact our support team with your order number."
+  },
+  {
+    "qid": 18,
+    "category": "discount",
+    "question": "Do you offer discounts or promo codes?",
+    "answer": "Yes, we regularly offer promotions. Sign up for our newsletter to receive exclusive discount codes and be notified of sales events."
+  },
+  {
+    "qid": 19,
+    "category": "exchange",
+    "question": "Can I exchange an item for a different size or color?",
+    "answer": "Yes, exchanges are accepted within 30 days. Start a return for the original item and place a new order for the item you want. We'll process your refund once we receive the return."
+  },
+  {
+    "qid": 20,
+    "category": "contact",
+    "question": "How can I contact customer support?",
+    "answer": "You can reach our customer support team via email at support@storefront.com, by phone at 1-800-555-0123 (Mon-Fri 9am-6pm EST), or through our live chat during business hours."
+  }
+]
+
