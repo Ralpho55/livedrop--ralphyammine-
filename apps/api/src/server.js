@@ -16,10 +16,14 @@ app.get("/health", (_, res) => res.json({ status: "ok" }));
 import customers from "./routes/customers.js";
 import products from "./routes/products.js";
 import orders from "./routes/orders.js";
+import analytics from "./routes/analytics.js";
+import dashboard from "./routes/dashboard.js";
 
 app.use("/api/customers", customers);
 app.use("/api/products", products);
 app.use("/api/orders", orders);
+app.use("/api/analytics", analytics);
+app.use("/api/dashboard", dashboard);
 
 const PORT = process.env.PORT || 5000;
 
