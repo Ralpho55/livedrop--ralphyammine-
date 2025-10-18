@@ -2,6 +2,7 @@ import express from "express";
 import Order from "../models/Order.js";
 import Customer from "../models/Customer.js";
 import Product from "../models/Product.js";
+import { orderStatusStream } from "../sse/order-status.js";
 
 const router = express.Router();
 
@@ -105,5 +106,7 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.get("/:id/stream", orderStatusStream);
 
 export default router;
