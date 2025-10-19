@@ -18,7 +18,16 @@ import products from "./routes/products.js";
 import orders from "./routes/orders.js";
 import analytics from "./routes/analytics.js";
 import dashboard from "./routes/dashboard.js";
+import { handleAssistantQuery } from "./assistant/engine.js";
 
+app.post("/api/assistant", async (req, res) => {
+  try {
+    const result = await handleAssistantQuery(req.body.query);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 app.use("/api/customers", customers);
 app.use("/api/products", products);
 app.use("/api/orders", orders);
