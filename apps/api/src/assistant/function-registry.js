@@ -21,6 +21,7 @@ class FunctionRegistry {
   }
 
   async execute(name, parameters) {
+    console.log(`[FunctionRegistry] Executing ${name}`);
     const func = this.functions.get(name);
     if (!func) {
       throw new Error(`Function ${name} not found`);
@@ -176,4 +177,5 @@ class FunctionRegistry {
   }
 }
 
-export default FunctionRegistry;
+const functionRegistry = new FunctionRegistry();
+export default functionRegistry;

@@ -3,7 +3,8 @@ import path from "path";
 import yaml from "js-yaml";
 import axios from "axios";
 import { fileURLToPath } from "url";
-//import registry from "./function-registry.js";
+
+import functionRegistry from "./function-registry.js";
 import { classifyIntent } from "./intent-classifier.js";
 import { response } from "express";
 
@@ -29,7 +30,7 @@ export default class AssistantEngine {
     // 1) canonical path (repo root /docs/prompts.yaml)
     const rootDocs = path.resolve(__dirname, "../../../../docs/prompts.yaml");
     // 2) fallback (apps/api/docs/prompts.yaml)
-    //const apiLocalDocs = path.resolve(__dirname, "../../docs/prompts.yaml");
+    const apiLocalDocs = path.resolve(__dirname, "../../docs/prompts.yaml");
 
     if (fs.existsSync(rootDocs)) return rootDocs;
     if (fs.existsSync(apiLocalDocs)) return apiLocalDocs;
@@ -142,27 +143,27 @@ export default class AssistantEngine {
         responseText =
           "Let me check our store policy on that. (Grounding coming in Day 10)";
       } else if (intent === "order_status") {
-        // const order = await registry.execute("getOrderStatus", {
-        //   orderId: "demo123",
-        // });
-        // responseText = order
-        //   ? `Your order is currently ${order.status}. Expected delivery: ${order.estimatedDelivery}.`
-        //   : "I couldn’t locate your order right now.";
-        // functionsCalled.push("getOrderStatus");
-        responseText = "Your order is currently in transit. Expected delivery: 2025-10-25.";
+        const order = await functionRegistry.execute("getOrderStatus", {
+            orderId: "68f3f1ae7342c0c3da294bd9" // temporary test ID
+          });
+        responseText = order
+          ? `Your order is currently ${order.status}. Expected delivery: ${order.estimatedDelivery}.`
+          : "I couldn’t locate your order right now.";
+        functionsCalled.push("getOrderStatus");
+        //responseText = "Your order is currently in transit. Expected delivery: 2025-10-25.";
       } else if (intent === "product_search") {
-        // const products = await registry.execute("searchProducts", {
-        //   query,
-        //   limit: 3,
-        // });
-        // responseText = products?.length
-        //   ? `Here are a few matches: ${products
-        //       .map((p) => p.name)
-        //       .slice(0, 2)
-        //       .join(", ")}.`
-        //   : "I didn’t find any matching items.";
-        // functionsCalled.push("searchProducts");
-        responseText = "Searching for products...";
+        const products = await functionRegistry.execute("searchProducts", {
+          query,
+          limit: 3,
+        });
+        responseText = products?.length
+          ? `Here are a few matches: ${products
+              .map((p) => p.name)
+              .slice(0, 2)
+              .join(", ")}.`
+          : "I didn’t find any matching items.";
+        functionsCalled.push("searchProducts");
+        //responseText = "Searching for products...";
       } else if (intent === "complaint") {
         responseText =
           "I’m truly sorry for the inconvenience. Let’s fix this right away.";
