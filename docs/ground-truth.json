@@ -1,0 +1,108 @@
+[
+    {
+      "id": "Policy3.1",
+      "question": "What is your return policy?",
+      "answer": "Items can be returned within 30 days of purchase with the original receipt and packaging. All items must be unused and in their original condition. Refunds are issued to the original payment method within 5–7 business days.",
+      "category": "returns",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Policy3.2",
+      "question": "Can I exchange an item instead of returning it?",
+      "answer": "Yes. Exchanges are allowed for the same item in a different size or color within 30 days of purchase. If the replacement item costs more, the price difference will be charged at checkout.",
+      "category": "returns",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Policy3.3",
+      "question": "Are there any non-returnable items?",
+      "answer": "Gift cards, clearance items, and digital products are non-returnable unless defective. Personalized or custom-made products cannot be refunded once confirmed.",
+      "category": "returns",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Shipping2.1",
+      "question": "What are your shipping options?",
+      "answer": "We offer Standard (5–7 days $5.99), Express (2–3 days $12.99), and Overnight ($24.99) shipping. Orders above $50 ship free via Standard delivery.",
+      "category": "shipping",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Shipping2.2",
+      "question": "Do you offer international shipping?",
+      "answer": "Yes, international shipping is available to select countries. Delivery times vary by location, and customs duties or import taxes may apply at the buyer’s expense.",
+      "category": "shipping",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Shipping2.3",
+      "question": "How can I track my order?",
+      "answer": "Once your order ships, you’ll receive a confirmation email containing a tracking number and carrier link to monitor delivery progress in real time.",
+      "category": "shipping",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Warranty1.1",
+      "question": "Do your products come with a warranty?",
+      "answer": "Most electronics include a 1-year limited warranty covering manufacturing defects. Accessories and apparel are covered for 90 days. Warranty claims require proof of purchase.",
+      "category": "warranty",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Warranty1.2",
+      "question": "How do I file a warranty claim?",
+      "answer": "Contact our support team with your order ID, product serial number, and a description of the issue. We will guide you through inspection and replacement steps.",
+      "category": "warranty",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Privacy4.1",
+      "question": "How do you handle customer data?",
+      "answer": "We collect personal data only to process orders and improve service. Data is stored securely and never sold to third parties. You can request data deletion at any time.",
+      "category": "privacy",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Privacy4.2",
+      "question": "Can I delete my account and personal data?",
+      "answer": "Yes. You may submit a deletion request via your account settings or email support. Deletion requests are processed within 10 business days.",
+      "category": "privacy",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Security5.1",
+      "question": "Is my payment information secure?",
+      "answer": "All payments are processed through encrypted PCI-compliant gateways. We do not store your full card details on our servers.",
+      "category": "security",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Security5.2",
+      "question": "What should I do if I suspect a security breach?",
+      "answer": "Immediately contact our support team and change your account password. We will investigate and help secure your account.",
+      "category": "security",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Payment6.1",
+      "question": "Which payment methods do you accept?",
+      "answer": "We accept Visa, MasterCard, PayPal, and Apple Pay. Bank transfers are supported for corporate orders upon request.",
+      "category": "payment",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Cancellation7.1",
+      "question": "Can I cancel or modify my order?",
+      "answer": "Orders can be canceled or edited within 1 hour of placement. After that, cancellation depends on shipment status. Contact support immediately for urgent requests.",
+      "category": "orders",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": "Support8.1",
+      "question": "How can I contact customer support?",
+      "answer": "You can reach our support team via live chat on the website, by emailing support@shoplite.com, or through the Help Center in your account dashboard.",
+      "category": "support",
+      "lastUpdated": "2025-10-01T00:00:00Z"
+    }
+  ]
+  

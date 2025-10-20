@@ -6,14 +6,16 @@ import { fileURLToPath } from "url";
 
 import functionRegistry from "./function-registry.js";
 import { classifyIntent } from "./intent-classifier.js";
-import { response } from "express";
+import { groundQuery, formatPoliciesForPrompt, validateCitations } from "./grounding.js";
 
 /**
- * Assistant Engine — integrates identity, function registry, and LLM interface
+ * Assistant Engine — full architecture with intent routing, grounding, and validation
  */
 export default class AssistantEngine {
   constructor() {
     this.config = this.loadConfig();
+    this.functionCallLimit = 2;
+    this.responseTimeLimit = 5000; // 5 seconds
     console.log(
       "[AssistantEngine] Loaded identity:",
       this.config.prompts?.identity?.name || "Unknown"
@@ -67,26 +69,37 @@ export default class AssistantEngine {
       const __dirname = path.dirname(__filename);
       const jsonPath = path.resolve(
         __dirname,
-        "../../../../docs/prompting/ground-truth.json"
+        "../../../../docs/ground-truth.json"
       );
 
       if (fs.existsSync(jsonPath)) {
         const jsonContent = fs.readFileSync(jsonPath, "utf8");
-        config.knowledgeBase = JSON.parse(jsonContent);
+        const knowledgeBase = JSON.parse(jsonContent);
+        
+        // Ensure it's an array
+        if (Array.isArray(knowledgeBase)) {
+          config.knowledgeBase = knowledgeBase;
+          console.log(`[AssistantEngine] Loaded ${knowledgeBase.length} knowledge base entries`);
+        } else {
+          console.warn("[AssistantEngine] Knowledge base is not an array, skipping grounding.");
+          config.knowledgeBase = [];
+        }
       } else {
         console.warn("[AssistantEngine] No ground-truth.json found, skipping grounding.");
+        config.knowledgeBase = [];
       }
     } catch (err) {
       console.error("[AssistantEngine] Error loading ground-truth.json:", err.message);
+      config.knowledgeBase = [];
     }
 
     return config;
   }
 
   /**
-   * Build the structured prompt using Ava’s personality and tone per intent
+   * Build comprehensive prompt with grounding and function results
    */
-  buildPrompt(intent, query) {
+  buildPrompt(intent, query, groundedPolicies = "", functionResults = {}) {
     const baseIdentity = this.config.prompts?.identity?.name || "Ava";
     const role = this.config.prompts?.identity?.role || "E-commerce Assistant";
     const intentStyles = this.config.prompts?.intent_styles || {};
@@ -99,10 +112,29 @@ export default class AssistantEngine {
 
     let prompt = `You are ${baseIdentity}, a ${role}.\nTone: ${style.tone}\n\n`;
     prompt += `User Query: ${query}\n\n`;
+
+    // Add grounded policies for policy questions
+    if (groundedPolicies && groundedPolicies !== "No specific policies found for this query.") {
+      prompt += `${groundedPolicies}\n`;
+    }
+
+    // Add function results
+    if (functionResults.orderData) {
+      prompt += `Order Information:\n${JSON.stringify(functionResults.orderData, null, 2)}\n\n`;
+    }
+    if (functionResults.productResults) {
+      prompt += `Product Search Results:\n${JSON.stringify(functionResults.productResults, null, 2)}\n\n`;
+    }
+    if (functionResults.customerOrders) {
+      prompt += `Customer Orders:\n${JSON.stringify(functionResults.customerOrders, null, 2)}\n\n`;
+    }
+
     if (style.example) prompt += `Example response: ${style.example}\n\n`;
     prompt += `Follow these rules:\n- ${(
       this.config.prompts?.behavior_rules || []
     ).join("\n- ")}\n\n`;
+    
+    prompt += "Please provide a helpful, accurate response based on the available information.";
     return prompt;
   }
 
@@ -131,64 +163,110 @@ export default class AssistantEngine {
   }
 
   /**
-   * Main assistant handler — ties everything together
+   * Execute function with timeout and call limit enforcement
+   */
+  async executeFunction(name, params, functionsCalled) {
+    if (functionsCalled.length >= this.functionCallLimit) {
+      console.warn(`[AssistantEngine] Function call limit (${this.functionCallLimit}) reached`);
+      return null;
+    }
+
+    try {
+      const result = await functionRegistry.execute(name, params);
+      functionsCalled.push(name);
+      return result;
+    } catch (error) {
+      console.error(`[AssistantEngine] Function ${name} failed:`, error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Main assistant handler with full architecture
    */
   async handleAssistantQuery(query) {
-    try {
-      const intent = classifyIntent(query);
-      let responseText = "";
-      let functionsCalled = [];
+    const startTime = Date.now();
+    let functionsCalled = [];
+    let citations = [];
 
+    try {
+      // 1. Classify intent
+      const intent = classifyIntent(query);
+      console.log(`[AssistantEngine] Intent: ${intent}`);
+
+      // 2. Ground policy answers for policy_question intent
+      let groundedPolicies = "";
       if (intent === "policy_question") {
-        responseText =
-          "Let me check our store policy on that. (Grounding coming in Day 10)";
-      } else if (intent === "order_status") {
-        const order = await functionRegistry.execute("getOrderStatus", {
-            orderId: "68f3f1ae7342c0c3da294bd9" // temporary test ID
-          });
-        responseText = order
-          ? `Your order is currently ${order.status}. Expected delivery: ${order.estimatedDelivery}.`
-          : "I couldn’t locate your order right now.";
-        functionsCalled.push("getOrderStatus");
-        //responseText = "Your order is currently in transit. Expected delivery: 2025-10-25.";
-      } else if (intent === "product_search") {
-        const products = await functionRegistry.execute("searchProducts", {
-          query,
-          limit: 3,
-        });
-        responseText = products?.length
-          ? `Here are a few matches: ${products
-              .map((p) => p.name)
-              .slice(0, 2)
-              .join(", ")}.`
-          : "I didn’t find any matching items.";
-        functionsCalled.push("searchProducts");
-        //responseText = "Searching for products...";
-      } else if (intent === "complaint") {
-        responseText =
-          "I’m truly sorry for the inconvenience. Let’s fix this right away.";
-      } else if (intent === "chitchat") {
-        responseText = "Hey there! How can I help you with your order today?";
-      } else if (intent === "violation") {
-        responseText =
-          "Let’s stay respectful — I’m here to assist with your shopping questions.";
-      } else {
-        responseText =
-          "I might not have that information, but I can help with store or order-related questions.";
+        const groundingResult = groundQuery(query, this.config.knowledgeBase);
+        groundedPolicies = formatPoliciesForPrompt(groundingResult);
+        console.log(`[AssistantEngine] Grounded ${groundingResult.matchedPolicies.length} policies`);
       }
 
-      const prompt = this.buildPrompt(intent, query);
-      const finalResponse = await this.callLLM(prompt + "\n" + responseText);
+      // 3. Execute functions based on intent (with limits)
+      let functionResults = {};
+      if (intent === "order_status") {
+        // Try to extract order ID from query
+        const orderIdMatch = query.match(/order[:\s#]*([a-f0-9]{24})/i);
+        if (orderIdMatch) {
+          const result = await this.executeFunction("getOrderStatus", 
+            { orderId: orderIdMatch[1] }, functionsCalled);
+          if (result) functionResults.orderData = result;
+        }
+      } else if (intent === "product_search") {
+        const result = await this.executeFunction("searchProducts", 
+          { query, limit: 5 }, functionsCalled);
+        if (result) functionResults.productResults = result;
+      } else if (intent === "complaint") {
+        // Try to get customer orders if email mentioned
+        const emailMatch = query.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+        if (emailMatch) {
+          const result = await this.executeFunction("getCustomerOrders", 
+            { email: emailMatch[1] }, functionsCalled);
+          if (result) functionResults.customerOrders = result;
+        }
+      }
+
+      // 4. Build comprehensive prompt
+      const prompt = this.buildPrompt(intent, query, groundedPolicies, functionResults);
+
+      // 5. Call LLM with timeout
+      const llmPromise = this.callLLM(prompt);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Response timeout')), this.responseTimeLimit)
+      );
+
+      const responseText = await Promise.race([llmPromise, timeoutPromise]);
+
+      // 6. Validate citations
+      const citationValidation = validateCitations(responseText, this.config.knowledgeBase);
+      citations = citationValidation.validCitations;
+
+      // 7. Check response time
+      const responseTime = Date.now() - startTime;
+      if (responseTime > this.responseTimeLimit) {
+        console.warn(`[AssistantEngine] Response time exceeded: ${responseTime}ms`);
+      }
 
       return {
-        success: true,
+        text: responseText,
         intent,
-        response: finalResponse,
+        citations,
         functionsCalled,
+        responseTime,
+        success: true
       };
-    } catch (err) {
-      console.error("Error handling assistant query:", err);
-      return { success: false, error: err.message };
+
+    } catch (error) {
+      console.error("[AssistantEngine] Error:", error.message);
+      return {
+        text: "I apologize, but I'm having trouble processing your request right now.",
+        intent: "off_topic",
+        citations: [],
+        functionsCalled,
+        responseTime: Date.now() - startTime,
+        success: false,
+        error: error.message
+      };
     }
   }
 }

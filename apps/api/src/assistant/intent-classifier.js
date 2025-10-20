@@ -3,12 +3,19 @@ const INTENT_PATTERNS = {
         /(?:^|\s)(fuck|shit|damn|bitch|asshole|stupid|idiot|hate|kill|die|suck|terrible|awful|horrible)(?:\s|$)/i,
         /(go to hell|fuck off|piss off)/i
       ],
-    policy_question: [
-      /\b(return|refund|exchange|replace|warranty|guarantee)\b/i,
-      /\b(shipping|delivery time|policy|terms|conditions|privacy|cookie)\b/i,
-      /\b(cancel|modify|change order)\b/i,
-      /\b(size guide|measurements|fit)\b/i
-    ],
+      policy_question: [
+        // Returns & exchanges
+        /\b(return|refund|exchange|replace|warranty|warranties|guarantee)\b/i,
+        // Shipping, delivery, and general policy
+        /\b(shipping|delivery|delivery time|policy|terms|conditions|privacy|cookie)\b/i,
+        // Cancellations or modifications
+        /\b(cancel|cancellation|modify|change order)\b/i,
+        // Payments & security
+        /\b(payment|payments|pay|secure|security|method|methods|credit card|debit|transaction|checkout)\b/i,
+        // Account-related info
+        /\b(account|data|information|personal data|delete account)\b/i
+      ],
+      
     complaint: [
       /\b(problem|issue|broken|defective|damaged|wrong|incorrect|mistake|error)\b/i,
       /\b(not working|doesn't work|failed|failure)\b/i,
