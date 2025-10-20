@@ -1,199 +1,199 @@
-import fs from 'fs';
-import axios from 'axios';
-import path from 'path';
-import yaml from 'js-yaml';
-import { classifyIntent } from './intent-classifier.js';
-import FunctionRegistry from './function-registry.js';
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+import axios from "axios";
+import { fileURLToPath } from "url";
+//import registry from "./function-registry.js";
+import { classifyIntent } from "./intent-classifier.js";
+import { response } from "express";
 
-class AssistantEngine {
+/**
+ * Assistant Engine — integrates identity, function registry, and LLM interface
+ */
+export default class AssistantEngine {
   constructor() {
-    this.functionRegistry = new FunctionRegistry();
     this.config = this.loadConfig();
+    console.log(
+      "[AssistantEngine] Loaded identity:",
+      this.config.prompts?.identity?.name || "Unknown"
+    );
   }
 
+  /**
+   * Resolve file locations safely relative to engine.js
+   */
+  resolvePromptsYaml() {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+
+    // 1) canonical path (repo root /docs/prompts.yaml)
+    const rootDocs = path.resolve(__dirname, "../../../../docs/prompts.yaml");
+    // 2) fallback (apps/api/docs/prompts.yaml)
+    //const apiLocalDocs = path.resolve(__dirname, "../../docs/prompts.yaml");
+
+    if (fs.existsSync(rootDocs)) return rootDocs;
+    if (fs.existsSync(apiLocalDocs)) return apiLocalDocs;
+
+    console.warn("[AssistantEngine] prompts.yaml not found. Checked:", {
+      rootDocs,
+      apiLocalDocs,
+    });
+    return null;
+  }
+
+  /**
+   * Load configuration files: prompts.yaml + ground-truth.json (optional)
+   */
   loadConfig() {
+    const config = { prompts: {}, knowledgeBase: {} };
+
+    // --- Load YAML identity/personality config ---
     try {
-      // Load YAML config
-      const yamlPath = path.join(process.cwd(), 'docs', 'prompting', 'assistant-prompts.yml');
-      const yamlContent = fs.readFileSync(yamlPath, 'utf8');
-      const yamlConfig = yaml.load(yamlContent);
-
-      // Load JSON config
-      const jsonPath = path.join(process.cwd(), 'docs', 'prompting', 'ground-truth.json');
-      const jsonContent = fs.readFileSync(jsonPath, 'utf8');
-      const jsonConfig = JSON.parse(jsonContent);
-
-      return {
-        prompts: yamlConfig,
-        groundTruth: jsonConfig
-      };
-    } catch (error) {
-      console.error('Error loading config:', error);
-      return {
-        prompts: {},
-        groundTruth: {}
-      };
+      const yamlPath = this.resolvePromptsYaml();
+      if (yamlPath) {
+        const yamlContent = fs.readFileSync(yamlPath, "utf8");
+        config.prompts = yaml.load(yamlContent);
+      } else {
+        console.warn("[AssistantEngine] prompts.yaml could not be located.");
+      }
+    } catch (err) {
+      console.error("[AssistantEngine] Error loading prompts.yaml:", err.message);
     }
+
+    // --- Load knowledge base (optional) ---
+    try {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const jsonPath = path.resolve(
+        __dirname,
+        "../../../../docs/prompting/ground-truth.json"
+      );
+
+      if (fs.existsSync(jsonPath)) {
+        const jsonContent = fs.readFileSync(jsonPath, "utf8");
+        config.knowledgeBase = JSON.parse(jsonContent);
+      } else {
+        console.warn("[AssistantEngine] No ground-truth.json found, skipping grounding.");
+      }
+    } catch (err) {
+      console.error("[AssistantEngine] Error loading ground-truth.json:", err.message);
+    }
+
+    return config;
   }
 
-  async handleAssistantQuery(query) {
-    try {
-      // Classify the intent
-      const intent = classifyIntent(query);
-      
-      // Get function schemas for this intent
-      const availableFunctions = this.getFunctionsForIntent(intent);
-      
-      // Build context and prompt
-      const context = await this.buildContext(query, intent, availableFunctions);
-      const prompt = this.buildPrompt(query, intent, context);
-      
-      // Call LLM API
-      const response = await this.callLLM(prompt, availableFunctions);
-      
-      return {
-        success: true,
-        intent,
-        response: response.message || response,
-        functions: availableFunctions.length > 0 ? availableFunctions : undefined
-      };
-    } catch (error) {
-      console.error('Error handling assistant query:', error);
-      return {
-        success: false,
-        error: 'Failed to process query',
-        intent: 'off_topic'
-      };
-    }
-  }
+  /**
+   * Build the structured prompt using Ava’s personality and tone per intent
+   */
+  buildPrompt(intent, query) {
+    const baseIdentity = this.config.prompts?.identity?.name || "Ava";
+    const role = this.config.prompts?.identity?.role || "E-commerce Assistant";
+    const intentStyles = this.config.prompts?.intent_styles || {};
 
-  getFunctionsForIntent(intent) {
-    const functionSchemas = this.functionRegistry.getAllSchemas();
-    const intentFunctionMap = {
-      'order_status': ['getOrderStatus', 'getCustomerOrders'],
-      'product_search': ['searchProducts'],
-      'policy_question': ['searchProducts'], // Could search for policy-related products
-      'complaint': ['getCustomerOrders', 'getOrderStatus'],
-      'chitchat': [],
-      'off_topic': [],
-      'violation': []
+    const style = intentStyles[intent] || {
+      tone: "neutral",
+      phrasing: "Respond clearly.",
+      example: "",
     };
 
-    const functionNames = intentFunctionMap[intent] || [];
-    return functionNames.map(name => ({
-      name,
-      schema: functionSchemas[name]
-    })).filter(fn => fn.schema);
-  }
-
-  async buildContext(query, intent, availableFunctions) {
-    let context = {
-      intent,
-      query,
-      timestamp: new Date().toISOString()
-    };
-
-    // Execute relevant functions based on intent
-    if (intent === 'order_status') {
-      // Try to extract order ID or email from query
-      const orderIdMatch = query.match(/order[:\s#]*([a-f0-9]{24})/i);
-      const emailMatch = query.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-      
-      if (orderIdMatch) {
-        try {
-          const result = await this.functionRegistry.execute('getOrderStatus', {
-            orderId: orderIdMatch[1]
-          });
-          context.orderData = result;
-        } catch (error) {
-          console.error('Error fetching order status:', error);
-        }
-      } else if (emailMatch) {
-        try {
-          const result = await this.functionRegistry.execute('getCustomerOrders', {
-            email: emailMatch[1]
-          });
-          context.customerOrders = result;
-        } catch (error) {
-          console.error('Error fetching customer orders:', error);
-        }
-      }
-    } else if (intent === 'product_search') {
-      // Extract search terms
-      const searchTerms = query.replace(/find|search|looking for|need|want/gi, '').trim();
-      if (searchTerms) {
-        try {
-          const result = await this.functionRegistry.execute('searchProducts', {
-            query: searchTerms,
-            limit: 5
-          });
-          context.productResults = result;
-        } catch (error) {
-          console.error('Error searching products:', error);
-        }
-      }
-    }
-
-    return context;
-  }
-
-  buildPrompt(query, intent, context) {
-    const basePrompt = this.config.prompts?.base || "You are a helpful e-commerce assistant.";
-    const intentPrompts = this.config.prompts?.intents || {};
-    const intentPrompt = intentPrompts[intent] || `Handle this ${intent} query.`;
-    
-    let prompt = `${basePrompt}\n\n${intentPrompt}\n\nUser Query: ${query}\n\n`;
-    
-    // Add context data
-    if (context.orderData) {
-      prompt += `Order Information:\n${JSON.stringify(context.orderData, null, 2)}\n\n`;
-    }
-    
-    if (context.customerOrders) {
-      prompt += `Customer Orders:\n${JSON.stringify(context.customerOrders, null, 2)}\n\n`;
-    }
-    
-    if (context.productResults) {
-      prompt += `Product Search Results:\n${JSON.stringify(context.productResults, null, 2)}\n\n`;
-    }
-
-    // Add ground truth examples if available
-    if (this.config.groundTruth && this.config.groundTruth[intent]) {
-      prompt += `Examples:\n${JSON.stringify(this.config.groundTruth[intent], null, 2)}\n\n`;
-    }
-
-    prompt += "Please provide a helpful, accurate response based on the available information.";
-    
+    let prompt = `You are ${baseIdentity}, a ${role}.\nTone: ${style.tone}\n\n`;
+    prompt += `User Query: ${query}\n\n`;
+    if (style.example) prompt += `Example response: ${style.example}\n\n`;
+    prompt += `Follow these rules:\n- ${(
+      this.config.prompts?.behavior_rules || []
+    ).join("\n- ")}\n\n`;
     return prompt;
   }
 
-  async callLLM(prompt, availableFunctions) {
+  /**
+   * Local or external LLM call with mock fallback
+   */
+  async callLLM(prompt) {
     const llmUrl = process.env.LLM_GENERATE_URL;
-    
     if (!llmUrl) {
-      console.warn("[AssistantEngine] No LLM_GENERATE_URL set, returning mock response.");
-      return `[Mock LLM] ${prompt}`;
+      console.warn(
+        "[AssistantEngine] No LLM_GENERATE_URL set. Returning mock response."
+      );
+      return `[Mock LLM Response] ${prompt}`;
     }
 
     try {
       const response = await axios.post(llmUrl, {
         prompt,
-        max_tokens: 250
+        max_tokens: 250,
       });
-      
-      return response.data;
-    } catch (error) {
-      console.error('Error calling LLM API:', error);
-      return `[LLM Error]: ${error.message}`;
+      return response.data.text || "No response text received.";
+    } catch (err) {
+      console.error("LLM API Error:", err.message);
+      return `[LLM Error]: ${err.message}`;
+    }
+  }
+
+  /**
+   * Main assistant handler — ties everything together
+   */
+  async handleAssistantQuery(query) {
+    try {
+      const intent = classifyIntent(query);
+      let responseText = "";
+      let functionsCalled = [];
+
+      if (intent === "policy_question") {
+        responseText =
+          "Let me check our store policy on that. (Grounding coming in Day 10)";
+      } else if (intent === "order_status") {
+        // const order = await registry.execute("getOrderStatus", {
+        //   orderId: "demo123",
+        // });
+        // responseText = order
+        //   ? `Your order is currently ${order.status}. Expected delivery: ${order.estimatedDelivery}.`
+        //   : "I couldn’t locate your order right now.";
+        // functionsCalled.push("getOrderStatus");
+        responseText = "Your order is currently in transit. Expected delivery: 2025-10-25.";
+      } else if (intent === "product_search") {
+        // const products = await registry.execute("searchProducts", {
+        //   query,
+        //   limit: 3,
+        // });
+        // responseText = products?.length
+        //   ? `Here are a few matches: ${products
+        //       .map((p) => p.name)
+        //       .slice(0, 2)
+        //       .join(", ")}.`
+        //   : "I didn’t find any matching items.";
+        // functionsCalled.push("searchProducts");
+        responseText = "Searching for products...";
+      } else if (intent === "complaint") {
+        responseText =
+          "I’m truly sorry for the inconvenience. Let’s fix this right away.";
+      } else if (intent === "chitchat") {
+        responseText = "Hey there! How can I help you with your order today?";
+      } else if (intent === "violation") {
+        responseText =
+          "Let’s stay respectful — I’m here to assist with your shopping questions.";
+      } else {
+        responseText =
+          "I might not have that information, but I can help with store or order-related questions.";
+      }
+
+      const prompt = this.buildPrompt(intent, query);
+      const finalResponse = await this.callLLM(prompt + "\n" + responseText);
+
+      return {
+        success: true,
+        intent,
+        response: finalResponse,
+        functionsCalled,
+      };
+    } catch (err) {
+      console.error("Error handling assistant query:", err);
+      return { success: false, error: err.message };
     }
   }
 }
 
+// Singleton export for server.js
 const assistant = new AssistantEngine();
-
 export async function handleAssistantQuery(query) {
   return await assistant.handleAssistantQuery(query);
 }
-
-export default assistant;
-
