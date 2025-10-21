@@ -103,40 +103,33 @@ export default class AssistantEngine {
     const baseIdentity = this.config.prompts?.identity?.name || "Ava";
     const role = this.config.prompts?.identity?.role || "E-commerce Assistant";
     const intentStyles = this.config.prompts?.intent_styles || {};
-
+  
     const style = intentStyles[intent] || {
       tone: "neutral",
       phrasing: "Respond clearly.",
       example: "",
     };
-
-    let prompt = `You are ${baseIdentity}, a ${role}.\nTone: ${style.tone}\n\n`;
-    prompt += `User Query: ${query}\n\n`;
-
-    // Add grounded policies for policy questions
+  
+    let context = `You are ${baseIdentity}, a ${role}. Respond in a ${style.tone} and ${style.phrasing} manner.\n`;
+  
+    // Add relevant data or grounded info
     if (groundedPolicies && groundedPolicies !== "No specific policies found for this query.") {
-      prompt += `${groundedPolicies}\n`;
+      context += `\nRelevant Policies:\n${groundedPolicies}\n`;
     }
-
-    // Add function results
+  
     if (functionResults.orderData) {
-      prompt += `Order Information:\n${JSON.stringify(functionResults.orderData, null, 2)}\n\n`;
+      context += `\nOrder Information:\n${JSON.stringify(functionResults.orderData, null, 2)}\n`;
     }
     if (functionResults.productResults) {
-      prompt += `Product Search Results:\n${JSON.stringify(functionResults.productResults, null, 2)}\n\n`;
+      context += `\nProduct Results:\n${JSON.stringify(functionResults.productResults, null, 2)}\n`;
     }
-    if (functionResults.customerOrders) {
-      prompt += `Customer Orders:\n${JSON.stringify(functionResults.customerOrders, null, 2)}\n\n`;
-    }
-
-    if (style.example) prompt += `Example response: ${style.example}\n\n`;
-    prompt += `Follow these rules:\n- ${(
-      this.config.prompts?.behavior_rules || []
-    ).join("\n- ")}\n\n`;
-    
-    prompt += "Please provide a helpful, accurate response based on the available information.";
+  
+    // Main instruction: separate user input cleanly
+    const prompt = `${context}\nUser: ${query}\nAva:`;
+  
     return prompt;
   }
+  
 
   /**
    * Local or external LLM call with mock fallback
@@ -155,7 +148,11 @@ export default class AssistantEngine {
         prompt,
         max_tokens: 250,
       });
-      return response.data.text || "No response text received.";
+      return response.data.text
+  ?.replace(/^You are .*?Assistant\.\s*/i, "")
+  ?.replace(/^Ava:\s*/i, "")
+  ?.trim() || "No response text received.";
+
     } catch (err) {
       console.error("LLM API Error:", err.message);
       return `[LLM Error]: ${err.message}`;
