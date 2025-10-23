@@ -1,52 +1,77 @@
+import axios from 'axios'
+
 export interface Product {
-  id: number;
-  title: string;
-  price: number;
-  image: string;
-  tags: string[];
-  stockQty: number;
-  description: string;
+  _id?: string
+  id?: string
+  name: string
+  title?: string
+  price: number
+  image?: string
+  description?: string
+  tags?: string[]
 }
 
-export async function listProducts(): Promise<Product[]> {
-  const response = await fetch('/mock-catalog.json');
-  const products = await response.json();
-  return products;
+const API_BASE =
+  import.meta.env.VITE_API_BASE?.replace(/\/$/, '') || 'http://localhost:5000'
+
+/**
+ * 🛒 Fetch all products
+ */
+export async function listProducts(params?: {
+  search?: string
+  tag?: string
+  sort?: string
+  page?: number
+  limit?: number
+}) {
+  const { data } = await axios.get(`${API_BASE}/api/products`, { params })
+  return data
 }
 
-export async function getProduct(id: number): Promise<Product | undefined> {
-  const products = await listProducts();
-  return products.find(product => product.id === id);
+/**
+ * 🧾 Fetch a single product by ID
+ */
+export async function getProduct(id: string) {
+  const { data } = await axios.get(`${API_BASE}/api/products/${id}`)
+  return data
 }
 
-export async function placeOrder(cart: any): Promise<{ orderId: string }> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const orderId = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  
-  return { orderId };
+/**
+ * 🛍️ Place a new order
+ */
+export async function placeOrder(items: any[], customerId?: string) {
+  const payload = {
+    customerId: customerId || 'guest',
+    items: items.map((i) => ({
+      productId: i._id || i.id,
+      name: i.name || i.title,
+      price: i.price,
+      quantity: i.qty,
+    })),
+  }
+
+  const { data } = await axios.post(`${API_BASE}/api/orders`, payload)
+  return data // includes _id for redirect
 }
 
-export async function getOrderStatus(id: string): Promise<{ carrier: string; eta: string; status: string }> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const carriers = ['UPS', 'FedEx', 'USPS', 'DHL'];
-  const statuses = ['Processing', 'Shipped', 'In Transit', 'Out for Delivery', 'Delivered'];
-  
-  const carrier = carriers[Math.floor(Math.random() * carriers.length)];
-  const status = statuses[Math.floor(Math.random() * statuses.length)];
-  
-  // Generate random ETA (1-7 days from now)
-  const eta = new Date();
-  eta.setDate(eta.getDate() + Math.floor(Math.random() * 7) + 1);
-  
+/**
+ * 🚚 Fetch order status (non-SSE fallback)
+ */
+export async function getOrderStatus(id: string) {
+  const { data } = await axios.get(`${API_BASE}/api/orders/${id}`)
   return {
-    carrier,
-    eta: eta.toLocaleDateString(),
-    status
-  };
+    status: data.status,
+    carrier: data.carrier ?? 'Pending assignment',
+    eta:
+      data.estimatedDelivery ??
+      new Date(data.updatedAt).toLocaleDateString(),
+  }
 }
 
-
+/**
+ * 📊 Fetch analytics metrics
+ */
+export async function getAnalytics() {
+  const { data } = await axios.get(`${API_BASE}/api/analytics/metrics`)
+  return data
+}

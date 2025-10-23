@@ -7,6 +7,9 @@ import AppRouter from './lib/router'
 import SupportPanel from './components/assistant/SupportPanel'
 
 function App() {
+  console.log("✅ Running from", window.location.href);
+  console.log("✅ API base:", import.meta.env.VITE_API_BASE_URL);
+
   const { items, addItem, total } = useCartStore()
   
   useEffect(() => {
