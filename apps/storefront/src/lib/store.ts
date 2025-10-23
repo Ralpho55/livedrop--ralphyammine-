@@ -9,8 +9,8 @@ interface CartItem extends Product {
 interface CartStore {
   items: CartItem[]
   addItem: (product: Product, qty?: number) => void
-  removeItem: (productId: number) => void
-  updateQty: (productId: number, qty: number) => void
+  removeItem: (productId: string) => void
+  updateQty: (productId: string, qty: number) => void
   clearCart: () => void
   total: () => number
 }
@@ -19,69 +19,65 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      
+
       addItem: (product: Product, qty: number = 1) => {
         const items = get().items
-        const existingItem = items.find(item => item.id === product.id)
-        
-        if (existingItem) {
+        const productKey = product._id || product.id
+        const existing = items.find((i) => (i._id || i.id) === productKey)
+
+        if (existing) {
           set({
-            items: items.map(item =>
-              item.id === product.id
-                ? { ...item, qty: item.qty + qty }
-                : item
-            )
+            items: items.map((i) =>
+              (i._id || i.id) === productKey
+                ? { ...i, qty: i.qty + qty }
+                : i
+            ),
           })
         } else {
-          set({
-            items: [...items, { ...product, qty }]
-          })
+          set({ items: [...items, { ...product, qty }] })
         }
       },
-      
-      removeItem: (productId: number) => {
+
+      removeItem: (productId: string) => {
         set({
-          items: get().items.filter(item => item.id !== productId)
+          items: get().items.filter(
+            (i) => (i._id || i.id) !== productId
+          ),
         })
       },
-      
-      updateQty: (productId: number, qty: number) => {
+
+      updateQty: (productId: string, qty: number) => {
         if (qty <= 0) {
           get().removeItem(productId)
           return
         }
-        
+
         set({
-          items: get().items.map(item =>
-            item.id === productId ? { ...item, qty } : item
-          )
+          items: get().items.map((i) =>
+            (i._id || i.id) === productId ? { ...i, qty } : i
+          ),
         })
       },
-      
-      clearCart: () => {
-        set({ items: [] })
-      },
-      
-      total: () => {
-        return get().items.reduce((sum, item) => sum + (item.price * item.qty), 0)
-      }
+
+      clearCart: () => set({ items: [] }),
+
+      total: () =>
+        get().items.reduce(
+          (sum, i) => sum + (i.price || 0) * i.qty,
+          0
+        ),
     }),
     {
-      name: 'cart-store',
+      name: 'shoplite-cart',
       storage: {
         getItem: (name) => {
           const str = localStorage.getItem(name)
           return str ? JSON.parse(str) : null
         },
-        setItem: (name, value) => {
-          localStorage.setItem(name, JSON.stringify(value))
-        },
-        removeItem: (name) => {
-          localStorage.removeItem(name)
-        }
-      }
+        setItem: (name, value) =>
+          localStorage.setItem(name, JSON.stringify(value)),
+        removeItem: (name) => localStorage.removeItem(name),
+      },
     }
   )
 )
-
-

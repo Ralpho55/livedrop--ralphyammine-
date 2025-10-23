@@ -3,13 +3,18 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 // https://vite.dev/config/
+import dotenv from "dotenv";
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
 const dirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
+dotenv.config({ path: path.resolve(dirname, ".env") });
+console.log("✅ Loaded API base from .env:", process.env.VITE_API_BASE_URL);
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  root: dirname,
+  envDir: dirname,
   plugins: [react(), tailwindcss()],
   test: {
     projects: [{

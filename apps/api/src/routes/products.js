@@ -6,7 +6,7 @@ const router = express.Router();
 // GET / - get products with query params
 router.get("/", async (req, res) => {
   try {
-    const { search, tag, sort, page = 1, limit = 10 } = req.query;
+    const { search, tag, sort, page = 1, limit = 25 } = req.query;
     
     let query = {};
     
